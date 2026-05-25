@@ -158,6 +158,91 @@ def get_model():
 mdl = get_model()
 
 
+# ── Train all 6 models and return comparison table (cached) ───────────────────
+@st.cache_data(show_spinner="Training all 6 models for comparison (first load only — ~60 sec)…")
+def get_all_results(_df):
+    from sklearn.preprocessing import LabelEncoder, StandardScaler
+    from sklearn.model_selection import train_test_split
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.tree import DecisionTreeClassifier
+    from sklearn.ensemble import RandomForestClassifier, VotingClassifier, IsolationForest
+    from sklearn.metrics import (accuracy_score, precision_score,
+                                 recall_score, f1_score, roc_auc_score)
+    from imblearn.over_sampling import SMOTE
+    import xgboost as xgb
+
+    raw = _df.copy().drop(columns=["Transaction_ID", "User_ID", "Date"])
+    cats = ["Transaction_Type","Device_Type","Location","Merchant_Category","Card_Type"]
+    for c in cats:
+        le = LabelEncoder(); raw[c] = le.fit_transform(raw[c])
+
+    X, y = raw.drop(columns=["Fraud_Label"]), raw["Fraud_Label"]
+    Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+    Xtr_s, ytr_s = SMOTE(random_state=42).fit_resample(Xtr, ytr)
+    sc = StandardScaler()
+    Xtr_sc = sc.fit_transform(Xtr_s)
+    Xte_sc  = sc.transform(Xte)
+
+    def score(name, y_true, y_pred, y_prob=None):
+        auc = roc_auc_score(y_true, y_prob) * 100 if y_prob is not None else None
+        return {
+            "Model"    : name,
+            "Accuracy" : accuracy_score(y_true, y_pred)              * 100,
+            "Precision": precision_score(y_true, y_pred, zero_division=0) * 100,
+            "Recall"   : recall_score(y_true, y_pred, zero_division=0)    * 100,
+            "F1 Score" : f1_score(y_true, y_pred, zero_division=0)        * 100,
+            "AUC-ROC"  : auc,
+        }
+
+    results = []
+
+    # Logistic Regression
+    lr = LogisticRegression(max_iter=500, random_state=42)
+    lr.fit(Xtr_sc, ytr_s)
+    results.append(score("Logistic Regression", yte, lr.predict(Xte_sc),
+                         lr.predict_proba(Xte_sc)[:,1]))
+
+    # Decision Tree
+    dt = DecisionTreeClassifier(max_depth=12, random_state=42)
+    dt.fit(Xtr_sc, ytr_s)
+    results.append(score("Decision Tree", yte, dt.predict(Xte_sc),
+                         dt.predict_proba(Xte_sc)[:,1]))
+
+    # Random Forest
+    rf = RandomForestClassifier(n_estimators=100, max_depth=12, random_state=42, n_jobs=-1)
+    rf.fit(Xtr_sc, ytr_s)
+    results.append(score("Random Forest", yte, rf.predict(Xte_sc),
+                         rf.predict_proba(Xte_sc)[:,1]))
+
+    # XGBoost
+    xgb_m = xgb.XGBClassifier(n_estimators=100, max_depth=6, random_state=42,
+                               eval_metric="logloss", verbosity=0)
+    xgb_m.fit(Xtr_sc, ytr_s)
+    results.append(score("XGBoost", yte, xgb_m.predict(Xte_sc),
+                         xgb_m.predict_proba(Xte_sc)[:,1]))
+
+    # Isolation Forest (unsupervised — no labels at train time)
+    iso = IsolationForest(n_estimators=100, contamination=0.32, random_state=42)
+    iso.fit(Xtr_sc)
+    iso_pred = np.where(iso.predict(Xte_sc) == -1, 1, 0)
+    iso_scores = -iso.score_samples(Xte_sc)   # higher = more anomalous
+    results.append(score("Isolation Forest", yte, iso_pred, iso_scores))
+
+    # Voting Ensemble
+    vc = VotingClassifier([("lr", lr), ("rf", rf), ("xgb", xgb_m)], voting="soft")
+    vc.fit(Xtr_sc, ytr_s)
+    results.append(score("Voting Ensemble", yte, vc.predict(Xte_sc),
+                         vc.predict_proba(Xte_sc)[:,1]))
+
+    res_df = pd.DataFrame(results).sort_values("F1 Score", ascending=False).reset_index(drop=True)
+    res_df.insert(0, "Rank", range(1, len(res_df) + 1))
+    # Round to 2 decimal places
+    for col in ["Accuracy","Precision","Recall","F1 Score","AUC-ROC"]:
+        if col in res_df.columns:
+            res_df[col] = res_df[col].round(2)
+    return res_df
+
+
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 st.sidebar.markdown("## 🛡️ Fraud Detection")
 st.sidebar.markdown("*Data Science Project — Rohit*")
@@ -413,13 +498,11 @@ elif "Model" in page:
     st.title("🤖 Model Performance Results")
     st.caption("All 6 models trained on the same dataset and evaluated on a held-out 20% test set.")
 
-    results_df = None
+    # Load from CSV if available (notebook was run), otherwise train all models here
     if os.path.exists("model_comparison.csv"):
         results_df = pd.read_csv("model_comparison.csv")
-
-    if results_df is None:
-        st.warning("⚠️ `model_comparison.csv` not found. Run the notebook first to generate model metrics.")
-        st.stop()
+    else:
+        results_df = get_all_results(df)
 
     # Clean up columns
     disp_cols = [c for c in ["Rank","Model","Accuracy","Precision","Recall","F1 Score","AUC-ROC"]
