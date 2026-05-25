@@ -1,0 +1,7 @@
+Rank,Model,Accuracy,Precision,Recall,F1 Score,AUC-ROC
+1,Voting Ensemble (LR+RF+XGB),82.13,67.69,69.12,68.4,86.07
+2,XGBoost,81.29,65.4,70.34,67.78,86.17
+3,Random Forest,81.66,66.71,68.76,67.72,85.81
+4,Logistic Regression,80.28,64.32,66.3,65.29,82.12
+5,Decision Tree,78.65,60.75,66.98,63.71,80.78
+6,Isolation Forest,66.29,41.29,48.57,44.64,64.55

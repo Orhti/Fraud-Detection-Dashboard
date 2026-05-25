@@ -5,7 +5,6 @@ models/
 
 # ── Generated outputs (recreated when notebook runs) ─────────────────────────
 *.png
-model_comparison.csv
 
 # ── Reference files (not needed for the app) ──────────────────────────────────
 reference/
