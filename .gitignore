@@ -1,0 +1,42 @@
+# ── Model files (too large for GitHub; app retrains automatically) ────────────
+models/
+*.pkl
+*.joblib
+
+# ── Generated outputs (recreated when notebook runs) ─────────────────────────
+*.png
+model_comparison.csv
+
+# ── Reference files (not needed for the app) ──────────────────────────────────
+reference/
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# ── Jupyter checkpoints ───────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/
+
+# ── Environments ──────────────────────────────────────────────────────────────
+.env
+.venv
+venv/
+env/
+ENV/
+
+# ── OS files ──────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── IDE ───────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
