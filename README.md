@@ -22,7 +22,7 @@ Financial fraud costs billions annually. This project builds a complete fraud de
 
 ## 🚀 Live Demo
 
-> **[▶ Open Dashboard on Streamlit Cloud](#)** ← *(link added after deployment)*
+> **[▶ Open Dashboard on Streamlit Cloud](https://fraud-detection-dashboard-ecaysbzh92x.streamlit.app/)**
 
 ---
 
@@ -115,13 +115,14 @@ To train all 6 models and generate evaluation charts:
 
 ## 📈 Key Results
 
-> *(Updated after running the notebook)*
-
 | Model | F1 Score | AUC-ROC |
 |-------|----------|---------|
-| Voting Ensemble | — | — |
-| Random Forest   | — | — |
-| XGBoost         | — | — |
+| Voting Ensemble | 68.4% | 86.1% |
+| XGBoost         | 67.8% | 86.2% |
+| Random Forest   | 67.7% | 85.8% |
+| Logistic Regression | 65.3% | 82.1% |
+| Decision Tree   | 63.7% | 80.8% |
+| Isolation Forest | 44.6% | 64.6% |
 
 ---
 
