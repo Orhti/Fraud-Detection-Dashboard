@@ -71,8 +71,8 @@ Financial fraud costs billions annually. This project builds a complete fraud de
 
 **1. Clone the repository**
 ```bash
-git clone https://github.com/YOUR_USERNAME/fraud-detection.git
-cd fraud-detection
+git clone https://github.com/Orhti/Fraud-Detection-Dashboard.git
+cd Fraud-Detection-Dashboard
 ```
 
 **2. Install dependencies**
